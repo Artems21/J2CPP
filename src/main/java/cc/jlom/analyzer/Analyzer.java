@@ -12,6 +12,7 @@ import org.objectweb.asm.tree.LocalVariableNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.*;
+
 import static cc.jlom.utils.GenUtil.gen_name_4_asm;
 import static org.objectweb.asm.Opcodes.*;
 
@@ -70,7 +71,6 @@ public class Analyzer {
             }
 
             method_buffer.append(String.format("add rsp, %d", needed_memory));
-
 
             // back callee saved registers from stack
             back_callee_registers(emulator, method_buffer);
@@ -162,23 +162,6 @@ public class Analyzer {
     private void fill_locals(Emulator emulator, List<LocalVariableNode> locals) {
         var offset = 0;
         var id = 0;
-//        for (var param : locals) {
-//            switch (param.toString()) {
-//                case "I":
-//                    emulator.add_to_locals(id, offset, 4);
-//                    id += 1;
-//                    offset += 4;
-//                    break;
-//                default:
-//                    if (param.toString().startsWith("L")) {
-//                        emulator.add_to_locals(id, offset, 8);
-//                        id += 2;
-//                        offset += 8;
-//                    } else {
-//                        throw new RuntimeException("Please implement me param type " + param);
-//                    }
-//            }
-//        }
         for (var local : locals) {
             switch (local.desc) {
                 case "I":

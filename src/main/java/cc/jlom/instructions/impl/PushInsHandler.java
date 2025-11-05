@@ -6,6 +6,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 
+import static cc.jlom.macros.MacrosImpl.*;
 import static java.lang.Math.abs;
 import static org.objectweb.asm.Opcodes.DCONST_0;
 import static org.objectweb.asm.Opcodes.LDC;
@@ -21,6 +22,10 @@ public class PushInsHandler extends InstructionHandler {
             if (!(ldc_inst.cst instanceof String))
                 throw new RuntimeException("Unexpected object type in PushHandler: " + ldc_inst.cst.getClass());
 
+            emulator.include_macro(STORE_REG_MACR0);
+            emulator.include_macro(LOAD_REG_MACR0);
+            emulator.include_macro(CREATE_JSTR_MACRO);
+
             var str = (String) ldc_inst.cst;
             var buffer = new StringBuilder();
             /* mov	rax, QWORD PTR [rdi]
@@ -30,18 +35,16 @@ public class PushInsHandler extends InstructionHandler {
             emulator.set_call_true();
             emulator.add_to_data(str_data, str);
 
-            buffer.append(String.format("mov [rsp+%d], rsi\n", emulator.locals_size));
-            buffer.append(String.format("mov [rsp+%d], rdx\n", emulator.locals_size+8));
-            buffer.append(String.format("mov [rsp+%d], rcx\n", emulator.locals_size+16));
-            buffer.append(String.format("mov [rsp+%d], rdi\n", emulator.locals_size+24));
-            buffer.append(String.format("lea rsi, [%s]\n", str_data));
-            buffer.append("mov rax, [rdi]\n");
-            buffer.append("call qword [rax+1336]\n");
+            // call store macro
+            buffer.append(String.format("%s %d\n", STORE_REG_MACR0.name(), emulator.locals_size));
+
+            // call create jstr macro
+            buffer.append(String.format("%s %s\n", CREATE_JSTR_MACRO.name(), str_data));
+
+            // call load macro
+            buffer.append(String.format("%s %d\n", LOAD_REG_MACR0.name(), emulator.locals_size));
+
             buffer.append(String.format("mov %s, rax\n", reg.name_8byte()));
-            buffer.append(String.format("mov rsi, [rsp+%d]\n", emulator.locals_size));
-            buffer.append(String.format("mov rdx, [rsp+%d]\n", emulator.locals_size+8));
-            buffer.append(String.format("mov rcx, [rsp+%d]\n", emulator.locals_size+16));
-            buffer.append(String.format("mov rdi, [rsp+%d]\n", emulator.locals_size+24));
 
 
             return buffer.toString();
